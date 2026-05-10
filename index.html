@@ -303,11 +303,12 @@
         }
 
         .badge-img {
-            width: 120px;
-            height: 120px;
-            margin: 20px auto;
+            width: 160px;
+            height: 160px;
+            margin: 10px auto;
             animation: badge-reveal 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.5));
+            mix-blend-mode: screen;
+            object-fit: contain;
         }
 
         /* Modal */
@@ -551,21 +552,21 @@
         };
 
         const QUIZ_DATA = [
-            { question: "What type of currency does KAST use for spending and earning?", options: ["Bitcoin", "Traditional bank credit", "Gift cards", "Stablecoins"], correct: 3 },
-            { question: "What is KAST primarily described as?", options: ["A crypto trading exchange", "A loan provider", "A savings-only platform", "A financial platform to store, earn, move, and spend stablecoins"], correct: 3 },
-            { question: "How do you earn cashback with KAST?", options: ["By referring friends", "By completing surveys", "By staking tokens overnight", "Every time you spend with your KAST card"], correct: 3 },
-            { question: "What do you need to load into your KAST wallet before spending?", options: ["Traditional currency", "Bitcoin", "Loyalty points", "Stablecoins"], correct: 3 },
-            { question: "When does cashback land in your KAST account?", options: ["At the end of the month", "After manual redemption", "Within 3–5 business days", "Instantly, right after your purchase"], correct: 3 },
-            { question: "Does earning KAST cashback require staking?", options: ["Yes, staking is mandatory", "Only for premium users", "Yes, but just once at setup", "No — no staking required"], correct: 3 },
-            { question: "Which of the following can you do on the KAST platform?", options: ["Only spend money", "Only save money", "Only trade crypto", "Store, earn, move, and spend stablecoins"], correct: 3 },
-            { question: "What kind of purchases work with the KAST card?", options: ["Only online purchases", "Only large transactions", "Only grocery shopping", "Any daily purchases — food, transport, shopping, anything"], correct: 3 },
-            { question: "What is the KAST tagline?", options: ["Earn crypto while you sleep", "Your money, your rules", "The future of digital banking", "Spend stablecoins. Earn real rewards. Every single day."], correct: 3 },
-            { question: "What is the official website domain for KAST?", options: ["kast.com", "kastwallet.io", "getkast.app", "kast.xyz"], correct: 3 },
-            { question: "What type of cashback does KAST now offer?", options: ["Gold tokens and silver tokens", "Crypto airdrops", "Store vouchers and gift cards", "USD stablecoin cashback"], correct: 3 },
-            { question: "What is the setup process like for KAST Cashback?", options: ["Requires weeks of identity verification", "Needs a bank transfer to activate", "Involves a complex onboarding form", "No complicated setup — just spend and earn"], correct: 3 },
-            { question: "Which of the following best describes how KAST cashback feels day-to-day?", options: ["You manually check rewards at the end of each week", "Rewards are only visible on a monthly statement", "You have to log in to claim each cashback separately", "Every spend, big or small, earns cashback working for you in the background"], correct: 3 },
-            { question: "What tool does KAST provide for everyday spending?", options: ["A crypto wallet app only", "A virtual savings account", "A peer-to-peer transfer link", "A KAST card"], correct: 3 },
-            { question: "What makes KAST different from traditional cashback programs?", options: ["It only rewards large purchases", "Cashback is paid in gift cards", "You need to wait for a monthly payout", "Cashback is earned automatically in stablecoins with no complicated setup"], correct: 3 }
+            { question: "What type of cashback does KAST now offer?", options: ["MOVE tokens", "KAST Points only", "USD cashback", "Bitcoin rewards"], correct: 2 },
+            { question: "What is the cashback rate for Standard tier members?", options: ["0.5%", "3%", "2%", "1.5%"], correct: 3 },
+            { question: "What is the cashback rate for Premium tier members?", options: ["1.5%", "3%", "2%", "2.5%"], correct: 2 },
+            { question: "What is the highest cashback rate available on KAST?", options: ["2%", "5%", "1.5%", "3%"], correct: 3 },
+            { question: "Which membership tier earns 3% cashback?", options: ["Standard", "Basic", "Premium", "Private"], correct: 3 },
+            { question: "When does cashback first appear in your account?", options: ["After 14 days", "At the end of the month", "At authorization — right when you spend", "After manual request"], correct: 2 },
+            { question: "What is the first stage of cashback in the Rewards Hub?", options: ["Redeemed", "Pending", "Locked", "Redeemable"], correct: 2 },
+            { question: "How long is the time lock before cashback becomes redeemable?", options: ["7 days", "30 days", "3 days", "14 days"], correct: 3 },
+            { question: "How do you redeem your cashback on KAST?", options: ["It redeems automatically", "You email support", "You tap Redeem in the Rewards Hub", "You withdraw it to your wallet"], correct: 2 },
+            { question: "After redeeming cashback, how is it applied?", options: ["Sent to your bank account", "Converted to crypto", "Applied to your next card purchase", "Added to your savings balance"], correct: 2 },
+            { question: "Can KAST cashback be withdrawn to another wallet?", options: ["Yes, anytime", "Only for Private tier", "Yes, after 30 days", "No — it can only be used for card spending inside KAST"], correct: 3 },
+            { question: "Does KAST cashback expire?", options: ["Yes, after 6 months", "Yes, after 1 year", "Yes, after 30 days", "No — once earned, cashback never expires"], correct: 3 },
+            { question: "What happens to cashback if a transaction is refunded?", options: ["You keep the cashback", "It doubles as compensation", "It converts to KAST Points", "It can be clawed back automatically"], correct: 3 },
+            { question: "What are the three stages of cashback in the Rewards Hub?", options: ["Pending", "Confirmed", "Paid", "Locked, Redeemable, Redeemed"], correct: 3 },
+            { question: "What determines how much cashback rate you earn on KAST?", options: ["How long you have been a user", "The country you live in", "The number of referrals you make", "Your membership tier"], correct: 3 }
         ];
 
         let state = {
