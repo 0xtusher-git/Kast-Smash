@@ -386,6 +386,8 @@
         #toast {
             position: fixed;
             bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
             background: rgba(0,0,0,0.8);
             color: white;
             padding: 12px 24px;
@@ -393,6 +395,37 @@
             font-size: 14px;
             display: none;
             z-index: 2000;
+            white-space: nowrap;
+        }
+
+        /* Music Toggle Button */
+        #music-btn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 3000;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 12px rgba(31,232,162,0.3);
+            user-select: none;
+        }
+        #music-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(31,232,162,0.5);
+        }
+        #music-btn.muted {
+            opacity: 0.5;
+            box-shadow: none;
         }
 
         /* ===== RESPONSIVE / MOBILE ===== */
@@ -409,6 +442,12 @@
     </style>
 </head>
 <body>
+
+    <!-- Background Music -->
+    <audio id="bg-music" src="assets/background music.mp3" loop preload="auto"></audio>
+
+    <!-- Music Toggle Button -->
+    <button id="music-btn" title="Toggle Music">🎵</button>
 
     <div id="toast"></div>
 
@@ -1167,6 +1206,52 @@
         
         document.getElementById('resume-btn').addEventListener('click', () => {
             document.getElementById('settings-modal').style.display = 'none';
+        });
+
+        // ===== BACKGROUND MUSIC =====
+        const bgMusic = document.getElementById('bg-music');
+        const musicBtn = document.getElementById('music-btn');
+        let musicEnabled = true;
+        let musicStarted = false;
+
+        function startMusic() {
+            if (musicStarted || !musicEnabled) return;
+            bgMusic.volume = 0.4;
+            bgMusic.play().then(() => {
+                musicStarted = true;
+            }).catch(() => {
+                // Autoplay blocked, will retry on next interaction
+            });
+        }
+
+        // Attempt autoplay on any first user interaction
+        const startOnInteraction = () => {
+            startMusic();
+            if (musicStarted) {
+                document.removeEventListener('click', startOnInteraction);
+                document.removeEventListener('touchstart', startOnInteraction);
+                document.removeEventListener('keydown', startOnInteraction);
+            }
+        };
+        document.addEventListener('click', startOnInteraction);
+        document.addEventListener('touchstart', startOnInteraction);
+        document.addEventListener('keydown', startOnInteraction);
+
+        // Also try immediately (works if browser allows)
+        bgMusic.play().then(() => { musicStarted = true; }).catch(() => {});
+
+        musicBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // don't trigger startOnInteraction
+            musicEnabled = !musicEnabled;
+            if (musicEnabled) {
+                musicBtn.textContent = '🎵';
+                musicBtn.classList.remove('muted');
+                bgMusic.play().then(() => { musicStarted = true; }).catch(() => {});
+            } else {
+                musicBtn.textContent = '🔇';
+                musicBtn.classList.add('muted');
+                bgMusic.pause();
+            }
         });
 
         // Initialize UI
