@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kast Smash | Match-3 Puzzle Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --card-bg: rgba(17, 17, 17, 0.8);
+            --white: #ffffff;
+            --teal: #1fe8a2;
+            --teal-glow: rgba(31, 232, 162, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --shadow: 0 0 30px rgba(31, 232, 162, 0.2);
+            --font-main: 'Space Grotesk', sans-serif;
+            --grid-size: 8;
+            --tile-size: calc(90vmin / var(--grid-size));
+            --max-container-width: 500px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(135deg, rgba(31, 232, 162, 0.05) 25%, transparent 25%), 
+                linear-gradient(225deg, rgba(31, 232, 162, 0.05) 25%, transparent 25%), 
+                linear-gradient(45deg, rgba(31, 232, 162, 0.05) 25%, transparent 25%), 
+                linear-gradient(315deg, rgba(31, 232, 162, 0.05) 25%, transparent 25%),
+                radial-gradient(circle at 10% 10%, var(--teal-glow) 0%, transparent 40%);
+            background-size: 20px 20px, 20px 20px, 20px 20px, 20px 20px, 100% 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            transition: opacity 0.5s ease;
+        }
+
+        .screen.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            box-shadow: var(--shadow);
+            padding: 30px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        /* Branding */
+        .branding {
+            margin-bottom: 30px;
+        }
+
+        .branding img {
+            height: 40px;
+            width: auto;
+        }
+
+        h1 { font-size: 32px; margin-bottom: 10px; color: var(--teal); text-shadow: 0 0 10px var(--teal-glow); }
+        p { color: #aaa; margin-bottom: 30px; }
+
+        /* Forms & Buttons */
+        .input-group {
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px 20px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.05);
+            font-family: var(--font-main);
+            font-size: 16px;
+            outline: none;
+            color: #fff;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--teal);
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border-radius: 50px;
+            border: none;
+            font-family: var(--font-main);
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: var(--teal);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(31, 232, 162, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--teal);
+            color: #000;
+        }
+
+        /* Gameplay Styles */
+        #game-screen {
+            padding: 8px;
+            justify-content: flex-start;
+            overflow-y: auto;
+        }
+
+        .top-bar {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            padding: 10px 14px;
+            border-radius: 18px;
+            border: 1px solid var(--glass-border);
+            gap: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-group { 
+            flex: 1;
+            min-width: 0;
+            text-align: center; 
+        }
+        .stat-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 15px; font-weight: 700; color: #fff; }
+
+        .settings-icon {
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            font-size: 20px;
+            color: var(--teal);
+        }
+
+        /* Grid — scales with smallest viewport dimension, never exceeds 500px */
+        #grid-container {
+            position: relative;
+            width: min(90vw, 90vh, 500px);
+            height: min(90vw, 90vh, 500px);
+            max-width: 500px;
+            max-height: 500px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            display: grid;
+            grid-template-columns: repeat(var(--grid-size), 1fr);
+            grid-template-rows: repeat(var(--grid-size), 1fr);
+            padding: 4px;
+            overflow: hidden;
+            touch-action: none;
+            flex-shrink: 0;
+        }
+
+        .tile {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .tile-inner {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 12px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+            transition: transform 0.2s;
+            border: 1px solid rgba(255,255,255,0.1);
+            background-color: rgba(255,255,255,0.05);
+            backdrop-filter: blur(5px);
+        }
+
+        .tile::after {
+            content: '';
+            position: absolute;
+            top: 4px; left: 4px; right: 4px; bottom: 4px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.2) 100%);
+            pointer-events: none;
+        }
+
+        .tile.selected .tile-inner {
+            transform: scale(1.1);
+            filter: drop-shadow(0 4px 8px rgba(31, 232, 162, 0.5));
+        }
+
+        /* Animations */
+        @keyframes blast {
+            0% { transform: scale(1); opacity: 1; filter: brightness(1); }
+            50% { transform: scale(1.2); filter: brightness(2); }
+            100% { transform: scale(1.5); opacity: 0; filter: brightness(3); }
+        }
+
+        .blasting { animation: blast 0.4s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        @keyframes burst-ring {
+            0% { transform: scale(0.5); opacity: 1; border: 2px solid var(--teal); }
+            100% { transform: scale(2); opacity: 0; border: 10px solid var(--teal); }
+        }
+
+        .burst-effect::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%;
+            animation: burst-ring 0.5s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes comet-trail {
+            0% { box-shadow: 0 0 0px 0px var(--teal); }
+            50% { box-shadow: 0 0 20px 10px var(--teal); }
+            100% { box-shadow: 0 0 40px 20px transparent; }
+        }
+
+        .comet-effect { animation: comet-trail 0.6s forwards; }
+
+        @keyframes fall {
+            0% { transform: translateY(-100px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .falling { animation: fall 0.4s ease-in forwards; }
+
+        @keyframes badge-reveal {
+            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+            70% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0); }
+        }
+
+        .badge-img {
+            width: 120px;
+            height: 120px;
+            margin: 20px auto;
+            animation: badge-reveal 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.5));
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        /* Quiz Styles */
+        .quiz-card {
+            text-align: left;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .options-container {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            padding: 16px;
+            border-radius: 16px;
+            text-align: left;
+            font-family: var(--font-main);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #fff;
+        }
+
+        .option-btn:hover {
+            background: rgba(31, 232, 162, 0.1);
+            border-color: var(--teal);
+            transform: translateY(-2px);
+        }
+
+        .option-btn.correct {
+            background: #d1fae5;
+            border-color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .option-btn.wrong {
+            background: #fee2e2;
+            border-color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 40px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            display: none;
+            z-index: 2000;
+        }
+
+        /* ===== RESPONSIVE / MOBILE ===== */
+        @media (max-width: 480px) {
+            .glass-card { padding: 20px 16px; border-radius: 20px; }
+            h1 { font-size: 24px; }
+            p { font-size: 14px; margin-bottom: 20px; }
+            .btn { font-size: 16px; padding: 14px 20px; }
+            .option-btn { font-size: 14px; padding: 13px; }
+            .question-text { font-size: 17px; }
+            .stat-value { font-size: 13px; }
+            .stat-label { font-size: 9px; }
+        }
+
+        @media (max-height: 700px) and (orientation: landscape) {
+            #game-screen { flex-direction: row; align-items: center; gap: 10px; padding: 6px; }
+            .top-bar { flex-direction: column; width: 110px; min-width: 110px; height: auto; gap: 6px; margin-bottom: 0; }
+            #grid-container {
+                width: min(92vh, calc(100vw - 130px));
+                height: min(92vh, calc(100vw - 130px));
+                max-width: none;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast"></div>
+
+    <!-- Screen 1: Welcome -->
+    <div id="welcome-screen" class="screen active">
+        <div class="glass-card">
+            <div class="branding">
+                <img src="assets/KAST-logo-white.png" alt="KAST Logo">
+            </div>
+            <h1>Kast Smash</h1>
+            <p>Spend stablecoins. Earn rewards. Blast tiles!</p>
+            <div class="input-group">
+                <input type="text" id="username-input" placeholder="Enter your username" autocomplete="off">
+            </div>
+            <button class="btn btn-primary" id="start-btn">Start Game</button>
+        </div>
+    </div>
+
+    <!-- Screen 2: Gameplay -->
+    <div id="game-screen" class="screen">
+        <div class="top-bar">
+            <img src="assets/KAST-logo-white.png" alt="KAST Logo" style="height: 20px; width: auto; margin-right: 10px;">
+            <div class="stat-group">
+                <div class="stat-label" id="player-name">User</div>
+                <div class="stat-value">Level <span id="current-level">1</span></div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Score</div>
+                <div class="stat-value"><span id="score">0</span> / <span id="target-score">10</span></div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Moves</div>
+                <div class="stat-value" id="moves-left">20</div>
+            </div>
+            <div class="settings-icon" id="settings-btn">⚙️</div>
+        </div>
+        <div id="grid-container"></div>
+    </div>
+
+    <!-- Screen 3: Level Complete -->
+    <div id="level-complete-screen" class="screen">
+        <div class="glass-card">
+            <h1 id="complete-title">Level 1 Complete! 🎉</h1>
+            <p>Score Earned: <span id="earned-score">0</span></p>
+            <div id="badge-container"></div>
+            <button class="btn btn-primary" id="next-level-btn">Next Level</button>
+        </div>
+    </div>
+
+    <!-- Screen 4: Quiz -->
+    <div id="quiz-screen" class="screen">
+        <div class="glass-card quiz-card">
+            <h2 style="margin-bottom: 20px;">Quick KAST Quiz! 🧠</h2>
+            <div class="question-text" id="quiz-question">Question text goes here?</div>
+            <div class="options-container" id="quiz-options">
+                <!-- Options will be injected here -->
+            </div>
+            <div id="quiz-feedback" style="margin-top: 20px; font-weight: 600; text-align: center;"></div>
+        </div>
+    </div>
+
+    <!-- Screen 5: Level Failed -->
+    <div id="level-failed-screen" class="screen">
+        <div class="glass-card">
+            <h1>Out of moves! 😔</h1>
+            <p>Final Score: <span id="failed-score">0</span> / <span id="failed-target">100</span></p>
+            <button class="btn btn-primary" id="retry-btn">Retry Level</button>
+            <button class="btn btn-secondary" onclick="location.reload()">Quit to Menu</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal">
+            <h2 style="margin-bottom: 20px;">Paused</h2>
+            <button class="btn btn-primary" id="resume-btn">Resume</button>
+            <button class="btn btn-secondary" onclick="location.reload()">Main Menu</button>
+        </div>
+    </div>
+
+    <script>
+        const TILE_TYPES = 7;
+        const GRID_SIZE = 8;
+        const ASSETS = {
+            tiles: [
+                'assets/tile1.png',
+                'assets/tile2.png',
+                'assets/tile3.png',
+                'assets/tile4.png',
+                'assets/tile5.png',
+                'assets/tile6.png',
+                'assets/tile7.png'
+            ],
+            badges: {
+                bronze: 'assets/bronze.png',
+                silver: 'assets/silver.png',
+                gold: 'assets/gold.png'
+            }
+        };
+
+        const QUIZ_DATA = [
+            { question: "What type of currency does KAST use for spending and earning?", options: ["Bitcoin", "Traditional bank credit", "Gift cards", "Stablecoins"], correct: 3 },
+            { question: "What is KAST primarily described as?", options: ["A crypto trading exchange", "A loan provider", "A savings-only platform", "A financial platform to store, earn, move, and spend stablecoins"], correct: 3 },
+            { question: "How do you earn cashback with KAST?", options: ["By referring friends", "By completing surveys", "By staking tokens overnight", "Every time you spend with your KAST card"], correct: 3 },
+            { question: "What do you need to load into your KAST wallet before spending?", options: ["Traditional currency", "Bitcoin", "Loyalty points", "Stablecoins"], correct: 3 },
+            { question: "When does cashback land in your KAST account?", options: ["At the end of the month", "After manual redemption", "Within 3–5 business days", "Instantly, right after your purchase"], correct: 3 },
+            { question: "Does earning KAST cashback require staking?", options: ["Yes, staking is mandatory", "Only for premium users", "Yes, but just once at setup", "No — no staking required"], correct: 3 },
+            { question: "Which of the following can you do on the KAST platform?", options: ["Only spend money", "Only save money", "Only trade crypto", "Store, earn, move, and spend stablecoins"], correct: 3 },
+            { question: "What kind of purchases work with the KAST card?", options: ["Only online purchases", "Only large transactions", "Only grocery shopping", "Any daily purchases — food, transport, shopping, anything"], correct: 3 },
+            { question: "What is the KAST tagline?", options: ["Earn crypto while you sleep", "Your money, your rules", "The future of digital banking", "Spend stablecoins. Earn real rewards. Every single day."], correct: 3 },
+            { question: "What is the official website domain for KAST?", options: ["kast.com", "kastwallet.io", "getkast.app", "kast.xyz"], correct: 3 },
+            { question: "What are the two types of rewards you can earn on KAST?", options: ["Bitcoin and Ethereum", "Cashback and store vouchers", "Gold tokens and silver tokens", "MOVE tokens and KAST Points"], correct: 3 },
+            { question: "What is the setup process like for KAST Cashback?", options: ["Requires weeks of identity verification", "Needs a bank transfer to activate", "Involves a complex onboarding form", "No complicated setup — just spend and earn"], correct: 3 },
+            { question: "Which of the following best describes how KAST cashback feels day-to-day?", options: ["You manually check rewards at the end of each week", "Rewards are only visible on a monthly statement", "You have to log in to claim each cashback separately", "Every spend, big or small, earns cashback working for you in the background"], correct: 3 },
+            { question: "What tool does KAST provide for everyday spending?", options: ["A crypto wallet app only", "A virtual savings account", "A peer-to-peer transfer link", "A KAST card"], correct: 3 },
+            { question: "What makes KAST different from traditional cashback programs?", options: ["It only rewards large purchases", "Cashback is paid in gift cards", "You need to wait for a monthly payout", "Cashback is earned automatically in stablecoins with no complicated setup"], correct: 3 }
+        ];
+
+        let state = {
+            username: '',
+            level: 1,
+            score: 0,
+            targetScore: 10,
+            moves: 20,
+            grid: [],
+            isAnimating: false,
+            selectedTile: null,
+            quizPool: [],
+            usedQuizzes: []
+        };
+
+        // Shuffle quiz answers on load
+        function prepareQuizzes() {
+            QUIZ_DATA.forEach(q => {
+                const correctOption = q.options[q.correct];
+                // Fisher-Yates shuffle
+                for (let i = q.options.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.options[i], q.options[j]] = [q.options[j], q.options[i]];
+                }
+                q.correct = q.options.indexOf(correctOption);
+            });
+            state.quizPool = [...QUIZ_DATA];
+        }
+        prepareQuizzes();
+
+        // DOM Elements
+        const screens = {
+            welcome: document.getElementById('welcome-screen'),
+            game: document.getElementById('game-screen'),
+            complete: document.getElementById('level-complete-screen'),
+            quiz: document.getElementById('quiz-screen'),
+            failed: document.getElementById('level-failed-screen')
+        };
+
+        const gridContainer = document.getElementById('grid-container');
+
+        // Navigation
+        function showScreen(screenId) {
+            Object.values(screens).forEach(s => s.classList.remove('active'));
+            screens[screenId].classList.add('active');
+        }
+
+        function showToast(msg, duration = 2000) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.style.display = 'none', duration);
+        }
+
+        // Game Initialization
+        function initGame() {
+            state.username = document.getElementById('username-input').value || 'Player';
+            document.getElementById('player-name').textContent = state.username;
+            state.level = 1;
+            startLevel();
+        }
+
+        function startLevel() {
+            state.score = 0;
+
+            // Level 1-10: Easy — generous moves, low targets
+            // Level 11-15: Mid-hard — tighter moves, higher targets
+            // Level 16-30: Progressive challenge
+            if (state.level <= 10) {
+                // Easy: Target 10-100, Moves 20
+                state.targetScore = 10 + (state.level - 1) * 10;
+                state.moves = 20;
+            } else if (state.level <= 15) {
+                // Mid-hard: Target 120-200, Moves 18 down to 14
+                state.targetScore = 120 + (state.level - 11) * 20;
+                state.moves = Math.max(14, 20 - (state.level - 10));
+            } else {
+                // Hard: Target scales steeply, moves drop
+                state.targetScore = 220 + (state.level - 16) * 30;
+                state.moves = Math.max(10, 20 - (state.level - 10));
+            }
+
+            updateUI();
+            createBoard();
+            showScreen('game');
+        }
+
+        function updateUI() {
+            document.getElementById('current-level').textContent = state.level;
+            document.getElementById('score').textContent = state.score;
+            document.getElementById('target-score').textContent = state.targetScore;
+            document.getElementById('moves-left').textContent = state.moves;
+        }
+
+        // Board Logic
+        function generateFreshGrid() {
+            // Build a grid data array with no initial matches and at least one valid move
+            let types;
+            do {
+                types = [];
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    types[r] = [];
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        // Pick a random type that doesn't immediately match 3 on spawn
+                        let t;
+                        let attempts = 0;
+                        do {
+                            t = Math.floor(Math.random() * TILE_TYPES);
+                            attempts++;
+                        } while (
+                            attempts < 20 && (
+                                (c >= 2 && types[r][c-1] === t && types[r][c-2] === t) ||
+                                (r >= 2 && types[r-1][c] === t && types[r-2][c] === t)
+                            )
+                        );
+                        types[r][c] = t;
+                    }
+                }
+            } while (!hasValidMovesOnTypes(types));
+            return types;
+        }
+
+        function hasValidMovesOnTypes(types) {
+            // Check horizontal swaps
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE - 1; c++) {
+                    if (canMatchBySwapOnTypes(types, r, c, r, c + 1)) return true;
+                }
+            }
+            // Check vertical swaps
+            for (let r = 0; r < GRID_SIZE - 1; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (canMatchBySwapOnTypes(types, r, c, r + 1, c)) return true;
+                }
+            }
+            return false;
+        }
+
+        function canMatchBySwapOnTypes(types, r1, c1, r2, c2) {
+            // Temporarily swap
+            const tmp = types[r1][c1];
+            types[r1][c1] = types[r2][c2];
+            types[r2][c2] = tmp;
+            const ok = checkMatchOnTypes(types, r1, c1) || checkMatchOnTypes(types, r2, c2);
+            // Swap back
+            types[r2][c2] = types[r1][c1];
+            types[r1][c1] = tmp;
+            return ok;
+        }
+
+        function checkMatchOnTypes(types, r, c) {
+            const t = types[r][c];
+            let h = 1, v = 1;
+            for (let i = c - 1; i >= 0 && types[r][i] === t; i--) h++;
+            for (let i = c + 1; i < GRID_SIZE && types[r][i] === t; i++) h++;
+            for (let i = r - 1; i >= 0 && types[i][c] === t; i--) v++;
+            for (let i = r + 1; i < GRID_SIZE && types[i][c] === t; i++) v++;
+            return h >= 3 || v >= 3;
+        }
+
+        function createBoard() {
+            gridContainer.innerHTML = '';
+            state.grid = [];
+            const types = generateFreshGrid();
+            for (let r = 0; r < GRID_SIZE; r++) {
+                state.grid[r] = [];
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const tile = createTile(r, c, types[r][c]);
+                    state.grid[r][c] = tile;
+                    gridContainer.appendChild(tile.el);
+                }
+            }
+        }
+
+        function createTile(r, c, type = null) {
+            const t = type !== null ? type : Math.floor(Math.random() * TILE_TYPES);
+            const el = document.createElement('div');
+            el.className = 'tile';
+            el.dataset.row = r;
+            el.dataset.col = c;
+            
+            const inner = document.createElement('div');
+            inner.className = 'tile-inner';
+            inner.style.backgroundImage = `url(${ASSETS.tiles[t]})`;
+            
+            el.appendChild(inner);
+            
+            el.addEventListener('mousedown', (e) => handleTouchStart(e, r, c));
+            el.addEventListener('touchstart', (e) => handleTouchStart(e, r, c), {passive: false});
+
+            return { r, c, type: t, el };
+        }
+
+        function hasInitialMatches() {
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (checkMatchAt(r, c).length >= 3) return true;
+                }
+            }
+            return false;
+        }
+
+        function hasValidMoves() {
+            // Check horizontal swaps — skip empty cells
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE - 1; c++) {
+                    if (state.grid[r][c].type === -1 || state.grid[r][c+1].type === -1) continue;
+                    if (canMatchBySwap(r, c, r, c + 1)) return true;
+                }
+            }
+            // Check vertical swaps — skip empty cells
+            for (let r = 0; r < GRID_SIZE - 1; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (state.grid[r][c].type === -1 || state.grid[r+1][c].type === -1) continue;
+                    if (canMatchBySwap(r, c, r + 1, c)) return true;
+                }
+            }
+            return false;
+        }
+
+        function canMatchBySwap(r1, c1, r2, c2) {
+            const type1 = state.grid[r1][c1].type;
+            const type2 = state.grid[r2][c2].type;
+            if (type1 === -1 || type2 === -1) return false;
+            
+            // Temporary swap
+            state.grid[r1][c1].type = type2;
+            state.grid[r2][c2].type = type1;
+            
+            const isMatch = checkMatchAt(r1, c1).length >= 3 || checkMatchAt(r2, c2).length >= 3;
+            
+            // Swap back
+            state.grid[r1][c1].type = type1;
+            state.grid[r2][c2].type = type2;
+            
+            return isMatch;
+        }
+
+        function checkMatchAt(r, c) {
+            const type = state.grid[r][c].type;
+            if (type === -1) return []; // empty cell — no match
+            let horizontal = [{r, c}];
+            let vertical = [{r, c}];
+            
+            // Horizontal
+            for (let i = c - 1; i >= 0 && state.grid[r][i] && state.grid[r][i].type === type; i--) horizontal.push({r, c: i});
+            for (let i = c + 1; i < GRID_SIZE && state.grid[r][i] && state.grid[r][i].type === type; i++) horizontal.push({r, c: i});
+            
+            // Vertical
+            for (let i = r - 1; i >= 0 && state.grid[i][c] && state.grid[i][c].type === type; i--) vertical.push({r: i, c});
+            for (let i = r + 1; i < GRID_SIZE && state.grid[i][c] && state.grid[i][c].type === type; i++) vertical.push({r: i, c});
+            
+            let matches = [];
+            if (horizontal.length >= 3) matches = matches.concat(horizontal);
+            if (vertical.length >= 3) {
+                vertical.forEach(v => {
+                    if (!matches.some(m => m.r === v.r && m.c === v.c)) matches.push(v);
+                });
+            }
+            return matches;
+        }
+
+        // Interaction
+        let dragStart = null;
+
+        function handleTouchStart(e, r, c) {
+            if (state.isAnimating) return;
+            e.preventDefault();
+            const pos = e.type.includes('touch') ? e.touches[0] : e;
+            dragStart = { r, c, x: pos.clientX, y: pos.clientY };
+            
+            if (state.selectedTile) {
+                state.selectedTile.el.classList.remove('selected');
+            }
+            state.selectedTile = state.grid[r][c];
+            state.selectedTile.el.classList.add('selected');
+            
+            window.addEventListener('mousemove', handleDragMove);
+            window.addEventListener('mouseup', handleDragEnd);
+            window.addEventListener('touchmove', handleDragMove, {passive: false});
+            window.addEventListener('touchend', handleDragEnd);
+        }
+
+        function handleDragMove(e) {
+            if (!dragStart) return;
+            const pos = e.type.includes('touch') ? e.touches[0] : e;
+            const dx = pos.clientX - dragStart.x;
+            const dy = pos.clientY - dragStart.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if (dist > 30) {
+                let targetR = dragStart.r;
+                let targetC = dragStart.c;
+                
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    targetC += dx > 0 ? 1 : -1;
+                } else {
+                    targetR += dy > 0 ? 1 : -1;
+                }
+                
+                if (targetR >= 0 && targetR < GRID_SIZE && targetC >= 0 && targetC < GRID_SIZE) {
+                    trySwap(dragStart.r, dragStart.c, targetR, targetC);
+                }
+                handleDragEnd();
+            }
+        }
+
+        function handleDragEnd() {
+            dragStart = null;
+            window.removeEventListener('mousemove', handleDragMove);
+            window.removeEventListener('mouseup', handleDragEnd);
+            window.removeEventListener('touchmove', handleDragMove);
+            window.removeEventListener('touchend', handleDragEnd);
+        }
+
+        async function trySwap(r1, c1, r2, c2) {
+            if (state.isAnimating) return;
+            state.isAnimating = true;
+            
+            if (state.selectedTile) {
+                state.selectedTile.el.classList.remove('selected');
+                state.selectedTile = null;
+            }
+
+            // Animate swap
+            await animateSwap(r1, c1, r2, c2);
+            
+            // Logic swap
+            swapData(r1, c1, r2, c2);
+            
+            const matches1 = checkMatchAt(r1, c1);
+            const matches2 = checkMatchAt(r2, c2);
+            
+            if (matches1.length >= 3 || matches2.length >= 3) {
+                state.moves--;
+                updateUI();
+                await processMatches(matches1.concat(matches2));
+            } else {
+                // Swap back
+                await animateSwap(r1, c1, r2, c2);
+                swapData(r1, c1, r2, c2);
+            }
+            
+            state.isAnimating = false;
+            checkGameStatus();
+        }
+
+        function swapData(r1, c1, r2, c2) {
+            const tempType = state.grid[r1][c1].type;
+            state.grid[r1][c1].type = state.grid[r2][c2].type;
+            state.grid[r2][c2].type = tempType;
+            
+            const bg1 = state.grid[r1][c1].el.querySelector('.tile-inner').style.backgroundImage;
+            const bg2 = state.grid[r2][c2].el.querySelector('.tile-inner').style.backgroundImage;
+            
+            state.grid[r1][c1].el.querySelector('.tile-inner').style.backgroundImage = bg2;
+            state.grid[r2][c2].el.querySelector('.tile-inner').style.backgroundImage = bg1;
+        }
+
+        function animateSwap(r1, c1, r2, c2) {
+            return new Promise(resolve => {
+                const el1 = state.grid[r1][c1].el;
+                const el2 = state.grid[r2][c2].el;
+                const dx = (c2 - c1) * 100;
+                const dy = (r2 - r1) * 100;
+                
+                el1.style.transition = 'transform 0.3s';
+                el2.style.transition = 'transform 0.3s';
+                el1.style.transform = `translate(${dx}%, ${dy}%)`;
+                el2.style.transform = `translate(${-dx}%, ${-dy}%)`;
+                
+                setTimeout(() => {
+                    el1.style.transition = 'none';
+                    el2.style.transition = 'none';
+                    el1.style.transform = '';
+                    el2.style.transform = '';
+                    resolve();
+                }, 300);
+            });
+        }
+
+        async function processMatches(matches) {
+            if (matches.length === 0) return;
+            
+            // Remove duplicates
+            const uniqueMatches = [];
+            const seen = new Set();
+            matches.forEach(m => {
+                const key = `${m.r},${m.c}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueMatches.push(m);
+                }
+            });
+
+            // Calculate Score & Bonus
+            let points = uniqueMatches.length;
+            let bonusEffect = null; // 'burst' or 'comet'
+            
+            // Match 4 check
+            if (uniqueMatches.length === 4) {
+                points *= 2;
+                bonusEffect = 'burst';
+            }
+            // Match 5 check
+            if (uniqueMatches.length >= 5) {
+                points *= 5;
+                bonusEffect = 'comet';
+            }
+
+            state.score += points;
+            updateUI();
+
+            // Handle Comet
+            if (bonusEffect === 'comet') {
+                const center = uniqueMatches[0];
+                // Clear row and column
+                for (let i = 0; i < GRID_SIZE; i++) {
+                    if (!seen.has(`${center.r},${i}`)) uniqueMatches.push({r: center.r, c: i});
+                    if (!seen.has(`${i},${center.c}`)) uniqueMatches.push({r: i, c: center.c});
+                }
+            }
+
+            // Animate Blasting
+            const blastPromises = uniqueMatches.map(m => {
+                const el = state.grid[m.r][m.c].el;
+                el.classList.add('blasting');
+                if (bonusEffect === 'burst') el.classList.add('burst-effect');
+                if (bonusEffect === 'comet') el.classList.add('comet-effect');
+                return new Promise(r => setTimeout(r, 400));
+            });
+            
+            await Promise.all(blastPromises);
+
+            // Clear Grid Data
+            uniqueMatches.forEach(m => {
+                state.grid[m.r][m.c].type = -1;
+                state.grid[m.r][m.c].el.style.opacity = '0';
+                state.grid[m.r][m.c].el.classList.remove('blasting');
+            });
+
+            // Gravity
+            await applyGravity();
+            
+            // Check for chain matches — skip empty cells
+            const chainMatches = [];
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (state.grid[r][c].type === -1) continue;
+                    const m = checkMatchAt(r, c);
+                    if (m.length >= 3) chainMatches.push(...m);
+                }
+            }
+            
+            if (chainMatches.length > 0) {
+                await processMatches(chainMatches);
+            } else if (!hasValidMoves()) {
+                await reshuffleBoard();
+            }
+        }
+
+        async function reshuffleBoard() {
+            // Fade out all tiles
+            state.grid.forEach(row => row.forEach(tile => {
+                tile.el.style.transition = 'opacity 0.3s, transform 0.3s';
+                tile.el.style.opacity = '0';
+                tile.el.style.transform = 'scale(0.8)';
+            }));
+            await new Promise(r => setTimeout(r, 350));
+
+            // Generate guaranteed valid board
+            const types = generateFreshGrid();
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    state.grid[r][c].type = types[r][c];
+                    state.grid[r][c].el.querySelector('.tile-inner').style.backgroundImage = `url(${ASSETS.tiles[types[r][c]]})`;
+                }
+            }
+
+            // Fade tiles back in with a staggered pop
+            state.grid.forEach((row, ri) => row.forEach((tile, ci) => {
+                setTimeout(() => {
+                    tile.el.style.transition = 'opacity 0.3s, transform 0.3s';
+                    tile.el.style.opacity = '1';
+                    tile.el.style.transform = 'scale(1)';
+                }, (ri + ci) * 15);
+            }));
+            await new Promise(r => setTimeout(r, 500));
+
+            // Reset transitions
+            state.grid.forEach(row => row.forEach(tile => {
+                tile.el.style.transition = '';
+                tile.el.style.transform = '';
+            }));
+
+            showToast('Board reshuffled — keep going! 🔄', 2500);
+        }
+
+        async function applyGravity() {
+            // Drop existing tiles
+            for (let c = 0; c < GRID_SIZE; c++) {
+                let emptySlots = 0;
+                for (let r = GRID_SIZE - 1; r >= 0; r--) {
+                    if (state.grid[r][c].type === -1) {
+                        emptySlots++;
+                    } else if (emptySlots > 0) {
+                        const targetR = r + emptySlots;
+                        state.grid[targetR][c].type = state.grid[r][c].type;
+                        state.grid[targetR][c].el.querySelector('.tile-inner').style.backgroundImage = state.grid[r][c].el.querySelector('.tile-inner').style.backgroundImage;
+                        state.grid[targetR][c].el.style.opacity = '1';
+                        
+                        state.grid[r][c].type = -1;
+                        state.grid[r][c].el.style.opacity = '0';
+                    }
+                }
+            }
+
+            // Fill new tiles
+            const newTilePromises = [];
+            for (let c = 0; c < GRID_SIZE; c++) {
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    if (state.grid[r][c].type === -1) {
+                        const newType = Math.floor(Math.random() * TILE_TYPES);
+                        state.grid[r][c].type = newType;
+                        state.grid[r][c].el.querySelector('.tile-inner').style.backgroundImage = `url(${ASSETS.tiles[newType]})`;
+                        state.grid[r][c].el.style.opacity = '1';
+                        state.grid[r][c].el.classList.add('falling');
+                        newTilePromises.push(new Promise(res => {
+                            setTimeout(() => {
+                                state.grid[r][c].el.classList.remove('falling');
+                                res();
+                            }, 400);
+                        }));
+                    }
+                }
+            }
+            await Promise.all(newTilePromises);
+        }
+
+        function checkGameStatus() {
+            if (state.score >= state.targetScore) {
+                showLevelComplete();
+            } else if (state.moves <= 0 && !state.isAnimating) {
+                showLevelFailed();
+            }
+        }
+
+        // Screens Handlers
+        function showLevelComplete() {
+            const title = document.getElementById('complete-title');
+            title.textContent = `Level ${state.level} Complete! 🎉`;
+            document.getElementById('earned-score').textContent = state.score;
+            
+            const badgeContainer = document.getElementById('badge-container');
+            badgeContainer.innerHTML = '';
+            
+            if (state.level === 5) {
+                badgeContainer.innerHTML = `<img src="${ASSETS.badges.bronze}" class="badge-img"><h3>🥉 Bronze Tier Unlocked!</h3>`;
+            } else if (state.level === 10) {
+                badgeContainer.innerHTML = `<img src="${ASSETS.badges.silver}" class="badge-img"><h3>🥈 Silver Tier Unlocked!</h3>`;
+            } else if (state.level === 15) {
+                badgeContainer.innerHTML = `<img src="${ASSETS.badges.gold}" class="badge-img"><h3>🥇 OG Gold Tier Unlocked!</h3>`;
+            }
+            
+            showScreen('complete');
+        }
+
+        function showLevelFailed() {
+            document.getElementById('failed-score').textContent = state.score;
+            document.getElementById('failed-target').textContent = state.targetScore;
+            showScreen('failed');
+        }
+
+        // Quiz Logic
+        function startQuiz() {
+            if (state.quizPool.length === 0) {
+                state.quizPool = [...QUIZ_DATA];
+                // Reshuffle options if pool is exhausted and reset
+                prepareQuizzes();
+                state.usedQuizzes = [];
+            }
+            
+            const randomIndex = Math.floor(Math.random() * state.quizPool.length);
+            const questionObj = state.quizPool.splice(randomIndex, 1)[0];
+            state.usedQuizzes.push(questionObj);
+            
+            const qEl = document.getElementById('quiz-question');
+            const oEl = document.getElementById('quiz-options');
+            const fEl = document.getElementById('quiz-feedback');
+            
+            qEl.textContent = questionObj.question;
+            oEl.innerHTML = '';
+            fEl.textContent = '';
+            
+            questionObj.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = `${String.fromCharCode(65 + idx)}. ${opt}`;
+                btn.onclick = () => handleQuizAnswer(idx, questionObj.correct, btn);
+                oEl.appendChild(btn);
+            });
+            
+            showScreen('quiz');
+        }
+
+        function handleQuizAnswer(selected, correct, btn) {
+            const options = document.querySelectorAll('.option-btn');
+            options.forEach(b => b.disabled = true);
+            
+            const fEl = document.getElementById('quiz-feedback');
+            
+            if (selected === correct) {
+                btn.classList.add('correct');
+                fEl.innerHTML = '<span style="color: #10b981;">✅ Correct! Moving to next level...</span>';
+                setTimeout(() => {
+                    state.level++;
+                    startLevel();
+                }, 1500);
+            } else {
+                btn.classList.add('wrong');
+                options[correct].classList.add('correct');
+                fEl.innerHTML = '<span style="color: #ef4444;">❌ Wrong! Replay this level to try again.</span>';
+                setTimeout(() => {
+                    startLevel();
+                }, 2000);
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('start-btn').addEventListener('click', initGame);
+        document.getElementById('next-level-btn').addEventListener('click', startQuiz);
+        document.getElementById('retry-btn').addEventListener('click', startLevel);
+        
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            document.getElementById('settings-modal').style.display = 'flex';
+        });
+        
+        document.getElementById('resume-btn').addEventListener('click', () => {
+            document.getElementById('settings-modal').style.display = 'none';
+        });
+
+        // Initialize UI
+        showScreen('welcome');
+
+    </script>
+</body>
+</html>
